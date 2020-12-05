@@ -1,0 +1,138 @@
+{% extends "mahjong/base.html" %}
+
+{% block backgroundpic%}
+<div class="demo"></div>
+{% endblock %}
+
+{% block logout%}
+    <div class="register">
+        <a href="{% url 'logout' %}" id="id_logout_link" class="loginReg">Logout</a>
+    </div>
+
+{% endblock %}
+
+{% block lobby%}
+
+    <form method="POST" action = "{% url 'initialize_game' %}" >
+        <center>
+            <h1 id = "room" class="welcome">Room ID: {{data.room_name}}</h1>
+<!--            {{request.user.id}}-->
+
+            <input type="hidden" id = "room_id" name="room_id" value={{data.room_name}} />
+            <input type="hidden" id = "id_user1_status" name="id_user1_status" value={{data.user1}} />
+            <input type="hidden" id = "id_user2_status" name="id_user2_status" value={{data.user2}} />
+            <input type="hidden" id = "id_user3_status" name="id_user3_status" value={{data.user3}} />
+            <input type="hidden" id = "id_user4_status" name="id_user4_status" value={{data.user4}} />
+            <input type="hidden" name="game_id" value = {{data.game_id}} />
+
+            {{ data | json_script:"data" }}
+
+
+            <script>
+                // get the room name
+                const data = JSON.parse(document.getElementById('data').textContent);
+
+                const chatSocket = new WebSocket(
+                    'ws://'
+                    + window.location.host
+                    + '/mahjong/joinroom/'
+                    + data["room_name"]
+                    + '/'
+                );
+
+
+                gameID = data["room_name"]
+                user_name = data["current_username"]
+
+                // reveive the message
+                chatSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+
+                    if(data.message === 'join'){
+                        document.querySelector('#' + data.user_num).innerHTML = data.user_name.toString();
+                        document.querySelector('#id_'+data.user_num).value = data.user_id.toString();
+                    }
+                    if(data.message === 'start'){
+
+                        var req = new XMLHttpRequest()
+                        req.open("POST", "/mahjong/refresh_game_test", true);
+                        req.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+
+                        req.send("user_num=" + data.user_num +
+                                    "&game_id=" + gameID +
+                                    "&message=" + "Game starts!" +
+                                    "&csrfmiddlewaretoken="+getCSRFToken())
+
+                        window.location.pathname = '/mahjong/refresh_game/' + gameID + '/Game%20starts!';
+
+                    }
+                };
+
+                chatSocket.onopen = function(e) {
+
+                    chatSocket.send(JSON.stringify({
+                        'user_num': data["current_user_num"],
+                        'user_id': data["current_user"],
+                        'user_name': data["current_username"],
+                        'message': "join",
+                    }));
+                };
+
+            </script>
+
+            <p class="lobbyWait">
+                Player1:
+                <span id="user1_status">
+                    {% if data.user1 %}
+                        {{data.user1_username}}
+                    {%else%}
+                        Still Waiting
+                    {% endif %}
+                </span>
+            </p>
+            
+            <p class="lobbyWait">
+                Player2:
+                <span id="user2_status">
+                    {% if data.user2 %}
+                        {{data.user2_username}}
+                    {%else%}
+                        Still Waiting
+                    {% endif %}
+                </span>
+            </p>
+
+            <p class="lobbyWait">
+                Player3:
+                <span id="user3_status">
+                    {% if data.user3 %}
+                        {{data.user3_username}}
+                    {%else%}
+                        Still Waiting
+                    {% endif %}
+                </span>
+            </p>
+            
+
+            <p class="lobbyWait">
+                Player4:
+                <span id="user4_status">
+                    {% if data.user4 %}
+                        {{data.user4_username}}
+                    {%else%}
+                        Still Waiting
+                    {% endif %}
+                </span>
+            </p>
+            
+            
+            {% csrf_token %}
+
+
+            {% if data.user1 == request.user.id %}
+                <button type="submit" id = "initialize_game_button" class="submitButton" >Start a Game</button>
+            {% endif %}
+        </center>
+        </form>
+
+{% endblock %}

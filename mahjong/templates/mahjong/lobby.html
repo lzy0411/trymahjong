@@ -1,0 +1,44 @@
+{% extends "mahjong/base.html" %}
+
+{% block backgroundpic%}
+<div class="demo"></div>
+{% endblock %}
+
+{% block logout%}
+
+    <div class="register">
+        <a href="{% url 'logout' %}" id="id_logout_link" class="loginReg">Logout</a>
+    </div>
+    
+{% endblock %}
+
+{% block lobby%}
+    <center>
+        <h1 class="welcome">Welcome!</h1>
+
+
+            <input placeholder="Enter Room Number" type="text" id="id_room_number" name="roomNum">
+
+        <input id="id_join_room" type="button" value="Join room" class="submitButton">
+
+
+        {{ message|json_script:"message_1" }}
+
+        <script>    
+            document.querySelector('#id_join_room').onclick = function(e) {
+                var roomName = document.querySelector('#id_room_number').value;
+                if(roomName === ""){
+                    alert("Sorry, please input the room number again")
+                    roomName = "0"
+                }
+                window.location.pathname = '/mahjong/joinroom/' + roomName + '/';                
+            };
+        </script>
+        <form method="post" action="{% url 'createroom' %}" id="createroom">
+            <button type="submit" id="id_create_room" class="submitButton">Create A New Room</button>
+            {% csrf_token %}
+        </form>
+
+    </center>
+    
+{% endblock %}

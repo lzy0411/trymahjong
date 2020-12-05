@@ -1,0 +1,382 @@
+{% extends "mahjong/base.html" %}
+
+{% block logout%}
+
+    <div class="register">
+        <a href="{% url 'logout' %}" id="id_logout_link" class="loginReg">Logout</a>
+    </div>
+
+{% endblock %}
+
+{% block title%}
+Game Room {{gameId}}
+{% endblock %}
+
+{% load static %}
+
+{% block others%}
+
+<div class="game">
+
+    {{ gameId|json_script:"gameId" }}
+    {{ userId|json_script:"userId" }}
+    {{ message|json_script:"message"}}
+    {{ username|json_script:"username"}}
+
+    <script>
+        
+        const gameId = JSON.parse(document.getElementById('gameId').textContent);
+        const userId = JSON.parse(document.getElementById('userId').textContent);
+        const message = JSON.parse(document.getElementById('message').textContent);
+        const username = JSON.parse(document.getElementById('username').textContent);
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/mahjong/joinroom/'
+            + gameId
+            + '/'
+        );
+
+        chatSocket.onopen = function(e) {
+            chatSocket.send(JSON.stringify({
+                // user_num should be the 'shuxu' in the game model
+                // e.g., is user_1 / user_2 in the model
+                // here the user_num does not matter, just use 0 instead
+                'user_num': 2,
+                'user_id': userId,
+                'user_name': username,
+                'message': "start",
+            }));
+        };
+
+        const refreshSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/mahjong/game/'
+            + gameId
+            + '/'
+        );
+
+        if(message === "A tile is discarded" || message === "Triple Success and Discard A Tile"){
+            refreshSocket.onopen = function(e) {
+
+                refreshSocket.send(JSON.stringify({
+                    // user_num should be the 'shuxu' in the game model
+                    // e.g., is user_1 / user_2 in the model
+                    // here the user_num does not matter, just use 0 instead
+                    'message': "refresh",
+                }));
+            };
+        }
+
+        refreshSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.message==='winpage'){
+
+                var req = new XMLHttpRequest()
+                req.open("POST", "/mahjong/win_game", true);
+                req.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+                req.send("&game_id=" + gameId +
+                    "&message=" + "Game End" +
+                    "&csrfmiddlewaretoken="+getCSRFToken())
+                window.location.pathname = '/mahjong/win_game/'+gameId;
+
+            } else {
+
+                var req = new XMLHttpRequest()
+                req.open("POST", "/mahjong/refresh_game_test", true);
+                req.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+
+                req.send("user_num=" + "0" +
+                    "&game_id=" + gameId +
+                    "&message=" + "Game refresh!" +
+                    "&csrfmiddlewaretoken="+getCSRFToken())
+
+                window.location.pathname = '/mahjong/refresh_game/' + gameId + '/Game%20refresh!';
+            }
+
+
+        };
+
+        // refreshSocket.onmessage = function(e) {
+        //     var req = new XMLHttpRequest()
+        //     req.open("POST", "/mahjong/refresh_game_test", true);
+        //     req.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+        //
+        //     req.send("user_num=" + "0" +
+        //         "&game_id=" + gameId +
+        //         "&message=" + "Game refresh!" +
+        //         "&csrfmiddlewaretoken="+getCSRFToken())
+        //
+        //     window.location.pathname = '/mahjong/refresh_game/' + gameId + '/Game%20refresh!';
+        //
+        // };
+    </script>
+
+    <center>
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <center>
+                        <img id="top_user" src="{% static 'mahjong/top.png' %}" height="60px">
+                        {% if request.user.id == user3.id %}
+                            <div style='font-size:15px;display:inline'>{{user1.username}}</div>
+                        {% if user1 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                                {% endif %}
+                        {% endif %}
+                        {% if request.user.id == user2.id %}
+                            <div style='font-size:15px;display:inline'>{{user4.username}}</div>
+                        {% if user4 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                                {% endif %}
+                        {% endif %}
+                        {% if request.user.id == user4.id %}
+                            <div style='font-size:15px;display:inline'>{{user2.username}}</div>
+                        {% if user2 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                                {% endif %}
+                        {% endif %}
+                        {% if request.user.id == user1.id %}
+                           <div style='font-size:15px;display:inline'>{{user3.username}}</div>
+                        {% if user3 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                                {% endif %}
+                        {% endif %}
+
+
+                    </center>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <img id="left_user" src="{% static 'mahjong/left.png' %}" width="60px">
+
+                        {% if request.user.id == user3.id %}
+                            <div style='font-size:15px;display:inline'>{{user2.username}}</div>
+                            {% if user2 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if request.user.id == user2.id %}
+                            <div style='font-size:15px;display:inline'>{{user1.username}}</div>
+                            {% if user1 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if request.user.id == user4.id %}
+                            <div style='font-size:15px;display:inline'>{{user3.username}}</div>
+                            {% if user3 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if request.user.id == user1.id %}
+                            <div style='font-size:15px;display:inline'>{{user4.username}}</div>
+                            {% if user4 == current_user %}
+                                <div style='font-size:20px;display:inline'>&#129304</div>
+                            {% endif %}
+                        {% endif %}
+
+                </td>
+
+<!--                operation button-->
+
+                <td>
+                    <p style="margin-left:210px; font-size:20px">Last Discarded Tile: </p>
+                    {% if last_tile %}
+                        <img id = "last_discarded_id" src = "" width="80px" style="margin-left:260px;">
+                            <script language="javascript">
+                                var adres="/static/mahjong/"
+                                var adres2 = adres.concat({{last_tile.tile_index}}, ".png")
+                                document.getElementById("last_discarded_id").src = adres2;
+                            </script>
+                    {% else %}
+                        <p style="margin-left:260px;">Currently no</p>
+                    {% endif %}
+                    <h1 style="margin-left:140px;"> Remaining Tiles: {{num_of_tiles_tba}}</h1>
+                </td>
+
+                <td>
+                    
+                    {% if request.user.id == user3.id %}
+                        <div style='font-size:15px;display:inline'>{{user4.username}}</div>
+                        {% if user4 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if request.user.id == user2.id %}
+                        <div style='font-size:15px;display:inline'>{{user3.username}}</div>
+                        {% if user3 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if request.user.id == user4.id %}
+                        <div style='font-size:15px;display:inline'>{{user1.username}}</div>
+                        {% if user1 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if request.user.id == user1.id %}
+                        <div style='font-size:15px;display:inline'>{{user2.username}}</div>
+                        {% if user2 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                    {% endif %}
+
+                    <img id="right_user" src="{% static 'mahjong/left.png' %}" width="60px">
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center; vertical-align: bottom;">
+                    {% if canEat %}
+                        <form method="POST" action = "{% url 'eat_tile' %}" id="eat">
+                            <input type="hidden" name="game_id" value = {{gameId}}>
+                            <input type="hidden" name="request_user" value = {{user}}">
+                            <button type="submit" id="id_eat" class="submitButton"> Eat </button>
+                            {% csrf_token %}
+                        </form>
+                    {% endif %}
+                </td>
+                
+                <td style="text-align: center; vertical-align: bottom;">
+                    
+                    <form method="POST" action = "{% url 'discard_tile_grab' %}" id="discard">
+                        {% csrf_token %}
+                    </form>
+
+                    {% if current_user == request.user and canWin %}
+                        <form method="POST" action = "{% url 'win_game' %}" >
+                            <input type="hidden" name = "game_id" id="game_id" value = "{{gameId}}">
+                            <input type="hidden" name = "request_user" id="request_user" value = "{{user}}">
+                            <button type="submit" id="id_winning" class="submitButton">Win</button>
+                            {% csrf_token %}
+                        </form>
+                    {%endif%}
+
+                    {% if canTriple  %}
+                        <form method="POST" action = "{% url 'triple_tile' %}" >
+                            <input type="hidden" name="game_id" value = {{gameId}}>
+                            <input type="hidden" name="request_user" value = {{user}}">
+                            {% csrf_token %}
+                            <button type="submit" id="id_triple" class="submitButton">Triple</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td>
+                    <p style="margin-left:30px;">{{message}}</p>
+                </td>
+            </tr>
+
+            <tr>
+
+                <td></td>
+                <td>
+
+                    {% if user.id == user1.id %}
+                        {% if user1 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                        <div style='font-size:15px;display:inline'>{{user1.username}}</div>
+
+                        {% for tile in list_in_user %}                        
+                            {% if canDiscard %}
+                                <img onclick="selectTile({{tile.pk}}, {{gameId}}, '{{user}}')" id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% else %}
+                                <img id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% endif %}
+
+                            <script language="javascript">
+                                var adres="/static/mahjong/"
+                                var adres2 = adres.concat({{tile.tile_index}}, ".png")
+                                document.getElementById({{tile.id}}).src = adres2;
+                            </script>
+
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if user.id == user2.id %}
+                        {% if user2 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                        <div style='font-size:15px;display:inline'>{{user2.username}}</div>
+
+                        {% for tile in list_in_user %}
+                            {% if canDiscard %}
+                                    <img onclick="selectTile({{tile.pk}}, {{gameId}}, '{{user.id}}')" id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% else %}
+                                    <img id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% endif %}
+
+                        <script language="javascript">
+                            var adres="/static/mahjong/"
+                            var adres2 = adres.concat({{tile.tile_index}}, ".png")
+                            document.getElementById({{tile.id}}).src = adres2;
+                        </script>
+
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if user.id == user3.id %}
+                        {% if user3 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                        <div style='font-size:15px;display:inline'>{{user3.username}}</div>
+                        {% for tile in list_in_user %}
+                            {% if canDiscard %}
+                                <img onclick="selectTile({{tile.pk}}, {{gameId}}, '{{user.id}}')" id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% else %}
+                                <img id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% endif %}
+
+                            <script language="javascript">
+                                var adres="/static/mahjong/"
+                                var adres2 = adres.concat({{tile.tile_index}}, ".png")
+                                document.getElementById({{tile.id}}).src = adres2;
+                            </script>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if user.id == user4.id %}
+                        {% if user4 == current_user %}
+                            <div style='font-size:20px;display:inline'>&#129304</div>
+                        {% endif %}
+                        <div style='font-size:15px;display:inline'>{{user4.username}}</div>
+                        
+                        {% for tile in list_in_user %}
+                            {% if canDiscard %}
+                                <img onclick="selectTile({{tile.pk}}, {{gameId}}, '{{user.id}}')" id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% else %}
+                                <img id= {{tile.id}}  src=""  height="60px" class="test">
+                            {% endif %}
+
+                            <script language="javascript">
+                                var adres="/static/mahjong/"
+                                var adres2 = adres.concat({{tile.tile_index}}, ".png")
+                                document.getElementById({{tile.id}}).src = adres2;
+                            </script>
+                        {% endfor %}
+                    {% endif %}
+
+
+                </td>
+
+                <td></td>
+            </tr>
+        </table>
+    </center>
+</div>
+{% endblock %}
+

@@ -1,0 +1,89 @@
+{% extends "mahjong/base.html" %}
+
+{% block winpage %}
+
+    {{ gameId|json_script:"gameId" }}
+    <script>
+        const gameId = JSON.parse(document.getElementById('gameId').textContent);
+        const refreshSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/mahjong/game/'
+            + gameId
+            + '/'
+        );
+        refreshSocket.onopen = function(e) {
+            refreshSocket.send(JSON.stringify({
+                'message': "winpage",
+            }));
+        };
+    </script>
+    
+    <section id="hero" class="d-flex align-items-center">
+        <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+            <div class="row justify-content-center">
+                {% if request.user.id == winner_id%}
+                    <div class="col-xl-7 col-lg-9 text-center">
+                        <h1>Congratulations! </h1>
+                    </div>
+                    <div class="col-xl-7 col-lg-9 text-center">
+                        <h1>You Win!</h1>
+                    </div>
+                {% else %}
+                    <div class="col-xl-7 col-lg-9 text-center">
+                        <h1>Sorry! You Loss :(</h1>
+                    </div>
+                    {% if winner != ""%}
+                        <div class="col-xl-7 col-lg-9 text-center">
+                            <h1>The winner is {{ winner_name }}</h1>
+                        </div>
+                    {% else %}
+                        <div class="col-xl-7 col-lg-9 text-center">
+                            <h1>Nobody wins the game</h1>
+                        </div>
+                    {% endif %}
+                {% endif %}
+                
+            </div>
+          
+
+            {% for tile in win_list %}
+
+                <img id= {{tile.id}}  src=""  height="60px" class="test">
+
+                <script language="javascript">
+                    var adres="/static/mahjong/"
+                    var adres2 = adres.concat({{tile.tile_index}}, ".png")
+                    document.getElementById({{tile.id}}).src = adres2;
+                </script>
+                
+            {% endfor %}
+
+          <br>
+          <br>
+
+          <div >
+              <center>
+                  <table>
+                      <td>
+                        <div class="icon-box">
+                            <h4 class="title"><a href="{% url 'lobby' %}">Back to lobby</a></h4>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="icon-box">
+                            <h4 class="title"><a href="{% url 'login' %}">Logout</a></h4>
+                        </div>
+                      </td>
+                  </table>
+              </center>
+
+            
+    
+          </div>
+    
+        </div>
+      </section><!-- End Hero -->
+
+{% endblock %}
+

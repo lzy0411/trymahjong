@@ -1,0 +1,49 @@
+{% extends "mahjong/base.html" %}
+
+
+{% block backgroundpic%}
+<div class="demo"></div>
+{% endblock %}
+
+{% block loginlink%}
+<div class="register">
+    <a href="{% url 'login' %}" id="id_login_link" class="loginReg">Login</a>
+</div>
+{% endblock %}
+
+{% block register %}
+    <center>
+        <div id="registerContent" class="regForm">
+
+
+            <form method="post" action="{% url 'register' %}">
+                <center>
+                <table>
+                    {% for field in form.visible_fields %}
+                        <tr>
+                            <td>{{field.label_tag}}</td>
+                            <td>{{field}}</td>
+                            <td class="errorlist">
+                                {% for error in field.errors %} {{error}} {% endfor %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                {% csrf_token %}
+                <button type="submit" class="submitButton" id="id_register_button">Register</button>
+                </center>
+            </form>
+
+
+            {% for error in form.non_field_errors %}
+                <p class="error">
+                    {{ error }}
+                </p>
+            {% endfor %}
+            </div>
+    </center>
+
+
+
+
+{% endblock %}

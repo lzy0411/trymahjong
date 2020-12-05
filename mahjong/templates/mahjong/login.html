@@ -1,0 +1,34 @@
+{% extends "mahjong/base.html" %}
+
+{% block backgroundpic%}
+<div class="demo"></div>
+{% endblock %}
+
+{% block registerlink%}
+    <div class="register">
+        <a href="{% url 'register' %}" id="id_register_link"  class="loginReg">Register</a>
+    </div>
+{% endblock %}
+
+
+{% block login %}
+
+    <center>
+        <p class="wordArt">ZhenNiuBi Mahjong Game</p>
+        <div id="loginContent" class="login-card">
+        <form method="POST" action="{% url 'login'%}" id="login">
+            <center>
+                <table style="font-size: 18px;">
+                    {{form}}
+                </table>
+                {% csrf_token %}
+                <button type="submit" id="id_login_button" class="submitButton"> Login </button>
+            </center>
+
+        </form>
+
+        </div>
+    </center>
+
+{% endblock %}
+
